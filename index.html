@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Alwaysriky - REST API</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; }
+
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f3f4f6; 
+            padding-top: 72px; 
+            opacity: 0; 
+            transition: opacity 0.5s ease-in-out; 
+        }
+        body.loaded { opacity: 1; }
+
+        .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #6B46C1; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.8s ease-out, visibility 0.8s; }
+        .loading-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .loading-screen .spinner { border: 5px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 5px solid #ffffff; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 18px; }
+        .loading-screen .loading-text { font-family: 'Space Grotesk', sans-serif; color: white; font-size: 1.15rem; font-weight: 500; letter-spacing: 0.5px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .navbar-placeholder .navbar { font-family: 'Space Grotesk', sans-serif; background-color: rgba(255,255,255,0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .navbar-placeholder .mobile-menu { transform: translateX(-100%); background-color: #ffffff; font-family: 'Poppins', sans-serif; transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1); box-shadow: 3px 0 10px rgba(0,0,0,0.08); }
+        .navbar-placeholder .mobile-menu.active { transform: translateX(0); }
+        .navbar-placeholder .hamburger { cursor: pointer; padding: 10px; }
+        .navbar-placeholder .hamburger-line { display: block; width: 26px; height: 2.5px; margin: 5.5px auto; background-color: #374151; transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1); border-radius: 3px;}
+        .navbar-placeholder .hamburger.active .hamburger-line:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+        .navbar-placeholder .hamburger.active .hamburger-line:nth-child(2) { opacity: 0; }
+        .navbar-placeholder .hamburger.active .hamburger-line:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+        .hero-section { text-align: center; margin: 3rem 1rem; padding: 3.5rem 1.5rem; box-shadow: 0 12px 35px rgba(0, 0, 0, 0.07); border-radius: 16px; background-color: #ffffff; }
+        .hero-section h1 { font-size: 2.25rem; font-weight: 700; margin-bottom: 1rem; font-family: 'Space Grotesk', sans-serif; }
+        .hero-section p.hero-subtitle { color: #4b5563; line-height: 1.75; font-size: 1.05rem; max-width: 650px; margin: 0 auto 2rem; }
+        .hero-section .cta-button { margin: 2rem auto; background: linear-gradient(90deg, #8A2BE2, #4B0082); color: white; padding: 14px 32px; border-radius: 50px; transition: all 0.3s ease-in-out; font-weight: 600; display: inline-block; box-shadow: 0 5px 18px rgba(138, 43, 226, 0.4); font-size: 1rem;}
+        .hero-section .cta-button:hover { background: linear-gradient(90deg, #7B1FA2, #3A006A); transform: translateY(-4px) scale(1.03); box-shadow: 0 7px 22px rgba(138, 43, 226, 0.5); }
+        .hero-section .cta-button a { color: white; text-decoration: none; }
+
+        @media (min-width: 768px) {
+            .hero-section { margin: 4rem auto; padding: 4rem 2rem; max-width: 900px;}
+            .hero-section h1 { font-size: 2.75rem; }
+            .hero-section p.hero-subtitle { font-size: 1.15rem; }
+        }
+        
+        .features-section { padding: 4rem 1rem; background-color: #f0e6ff; } /* Light purple background */
+        .features-section .section-title { font-family: 'Space Grotesk', sans-serif; text-align: center; font-size: 2rem; font-weight: 600; color: #3A006A; margin-bottom: 0.75rem; }
+        .features-section .section-subtitle-features { text-align: center; font-size: 1.05rem; color: #585072; max-width: 650px; margin: 0 auto 3.5rem; }
+        .feature-card { background-color: #ffffff; border-radius: 12px; padding: 2rem 1.5rem; text-align: center; box-shadow: 0 7px 20px rgba(0,0,0,0.06); transition: transform 0.3s ease, box-shadow 0.3s ease; display: flex; flex-direction: column; align-items: center; height: 100%;}
+        .feature-card:hover { transform: translateY(-6px); box-shadow: 0 10px 25px rgba(75, 0, 130, 0.1); } /* Purple shadow */
+        .feature-card .icon-container { width: 60px; height: 60px; margin-bottom: 1.25rem; background-image: linear-gradient(135deg, #9370DB, #6A5ACD); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; box-shadow: 0 5px 10px rgba(106, 90, 205, 0.3); }
+        .feature-card h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 600; color: #4B0082; margin-bottom: 0.6rem; }
+        .feature-card p { font-size: 0.9rem; color: #6c5e8e; line-height: 1.65; }
+
+        .cta-section-alt { padding: 4rem 1rem; background-color: #ffffff; text-align: center; }
+        .cta-section-alt h2 { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 600; color: #4B0082; margin-bottom: 1rem; }
+        .cta-section-alt p { font-size: 1.05rem; color: #585072; max-width: 600px; margin: 0 auto 2rem; }
+        .cta-section-alt .cta-button-register { background-image: linear-gradient(to right, #DA70D6, #BA55D3); color: white; border: none; padding: 12px 30px; border-radius: 50px; font-weight: 600; font-size: 1rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(218, 112, 214, 0.4);}
+        .cta-section-alt .cta-button-register:hover { background-image: linear-gradient(to right, #C71585, #9932CC); transform: scale(1.05); box-shadow: 0 6px 20px rgba(218, 112, 214, 0.5);}
+
+        footer { background-color: #1a202c; color: #a0aec0; padding: 3.5rem 1rem 2rem; text-align: center; }
+        footer .footer-logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; font-weight: 600; margin-bottom: 1rem; display: inline-block; background-image: linear-gradient(to right, #a0aec0, #e2e8f0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        footer .social-icons a { margin: 0 0.8rem; font-size: 1.3rem; transition: color 0.3s ease; }
+        footer .social-icons a:hover { color: #9370DB; }
+        footer .copyright-text { font-size: 0.85rem; margin-top: 1.8rem; border-top: 1px solid #2d3748; padding-top: 1.8rem; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="loading-screen" id="loadingScreen">
+        <div class="spinner"></div>
+        <p class="loading-text">Alwaysriky Accessing...</p>
+    </div>
+    <main class="container mx-auto">
+        <section class="hero-section">
+            <h1 class="animate__animated animate__fadeInDown">
+                Alwaysriky REST API
+            </h1>
+            <p class="hero-subtitle animate__animated animate__fadeInUp animate__delay-0.2s">
+                A comprehensive REST API providing diverse endpoints for WhatsApp Bots, simplified for easy integration and use.
+            </p>
+            <a href="/dashboard" class="cta-button animate__animated animate__pulse animate__delay-0.5s animate__infinite--slower">
+                <i class="fas fa-tachometer-alt mr-2"></i> Go To Dashboard
+            </a>
+        </section>
+
+        <section class="features-section" id="features">
+            <div class="container mx-auto px-4">
+                <h2 class="section-title animate__animated animate__fadeInUp">Explore Our Powerful Features</h2>
+                <p class="section-subtitle-features animate__animated animate__fadeInUp animate__delay-0.1s">
+                    Unlock a world of possibilities with our extensive range of API endpoints, tailored for developers.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    <div class="feature-card">
+                        <div class="icon-container"><i class="fas fa-cogs"></i></div>
+                        <h3>Extensive API Collection</h3>
+                        <p>From AI & downloaders to utilities & search, find everything you need in one place.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon-container"><i class="fas fa-bolt"></i></div>
+                        <h3>Fast & Reliable</h3>
+                        <p>Optimized for speed and high availability, ensuring your applications run smoothly.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon-container"><i class="fas fa-code-branch"></i></div>
+                        <h3>Easy Integration</h3>
+                        <p>Well-documented APIs with simple request/response formats for quick implementation.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon-container"><i class="fas fa-shield-halved"></i></div>
+                        <h3>Secure & Scalable</h3>
+                        <p>Robust security measures and scalable infrastructure to support your growing needs.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon-container"><i class="fas fa-headset"></i></div>
+                        <h3>Developer Friendly</h3>
+                        <p>Clear documentation, responsive support, and a focus on developer experience.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon-container"><i class="fas fa-sync-alt"></i></div>
+                        <h3>Regular Updates</h3>
+                        <p>Continuously expanding with new features and improvements based on user feedback.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section-alt">
+            <div class="container mx-auto px-4 animate__animated animate__fadeIn">
+                <h2>Ready to Build Something Amazing?</h2>
+                <p>Join our community of developers and start leveraging the power of Alwaysriky APIs today.</p>
+                <a href="/auth/register" class="cta-button-register">
+                    <i class="fas fa-user-plus mr-2"></i> Sign Up for Free
+                </a>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer>
+        <div class="container mx-auto">
+            <a href="/" class="footer-logo-text">Alwaysriky-DcoderX</a>
+            <div class="social-icons flex justify-center mb-6">
+                <a href="https://facebook.com/alwaysriky-DcoderX" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://twitter.com/alwaysriky-DcoderX" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                <a href="https://www.instagram.com/mrizkirajditia" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="https://github.com/yourusername/Riky01store" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+            </div>
+            <p class="copyright-text">© <span id="currentYear"></span> Alwaysriky-DcoderX. All rights reserved. Simplified APIs for Complex Tasks.</p>
+        </div>
+    </footer>
+
+    <script>
+        function initializeNavScripts() {
+            const hamburgerMenuButton = document.getElementById('hamburger');
+            const mobileSideMenu = document.querySelector('.mobile-menu');
+
+            if (hamburgerMenuButton && mobileSideMenu) {
+                if (hamburgerMenuButton.dataset.listenerAttached !== 'true') {
+                    hamburgerMenuButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        hamburgerMenuButton.classList.toggle('active');
+                        mobileSideMenu.classList.toggle('active');
+                    });
+                    hamburgerMenuButton.dataset.listenerAttached = 'true';
+                }
+
+                if (document.body.dataset.globalListenerAttached !== 'true') {
+                    document.addEventListener('click', (e) => {
+                        if (mobileSideMenu && mobileSideMenu.classList.contains('active') && 
+                            !mobileSideMenu.contains(e.target) && 
+                            !hamburgerMenuButton.contains(e.target)) {
+                            mobileSideMenu.classList.remove('active');
+                            hamburgerMenuButton.classList.remove('active');
+                        }
+                    });
+                    document.body.dataset.globalListenerAttached = 'true';
+                }
+                
+                mobileSideMenu.querySelectorAll('a').forEach(link => {
+                    if (link.dataset.menuLinkListener !== 'true') {
+                        link.addEventListener('click', () => {
+                            mobileSideMenu.classList.remove('active');
+                            hamburgerMenuButton.classList.remove('active');
+                        });
+                        link.dataset.menuLinkListener = 'true';
+                    }
+                });
+            }
+        }
+
+        function executeScriptsInElement(element) {
+            const scripts = element.querySelectorAll("script");
+            let externalScriptsPending = 0;
+            
+            function checkAndInitialize() {
+                if (externalScriptsPending === 0) {
+                    initializeNavScripts();
+                }
+            }
+
+            if (scripts.length === 0) {
+                checkAndInitialize();
+                return;
+            }
+
+            scripts.forEach(script => {
+                const newScript = document.createElement("script");
+                if (script.src) {
+                    externalScriptsPending++;
+                    newScript.src = script.src;
+                    newScript.onload = () => {
+                        externalScriptsPending--;
+                        checkAndInitialize();
+                    };
+                    newScript.onerror = () => {
+                        externalScriptsPending--;
+                        console.error(`Failed to load script: ${script.src}`);
+                        checkAndInitialize();
+                    };
+                } else {
+                    newScript.textContent = script.textContent;
+                }
+                document.body.appendChild(newScript).parentNode.removeChild(newScript);
+            });
+            
+            if (externalScriptsPending === 0 && scripts.length > 0 && !Array.from(scripts).some(s => s.src)) {
+                 checkAndInitialize();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const bodyElement = document.body;
+            const navbarPlaceholder = document.getElementById('navbar-placeholder');
+
+            fetch('/nav.html') 
+                .then(response => response.ok ? response.text() : Promise.reject('Failed to load navbar HTML'))
+                .then(data => {
+                    if (navbarPlaceholder) {
+                        navbarPlaceholder.innerHTML = data;
+                        executeScriptsInElement(navbarPlaceholder);
+                    }
+                })
+                .catch(error => console.error('Error loading navbar:', error))
+                .finally(() => {
+                     setTimeout(() => {
+                        if (loadingScreen) loadingScreen.classList.add('hidden');
+                        bodyElement.classList.add('loaded');
+                    }, 250); 
+                });
+
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+            
+            const featureCards = document.querySelectorAll('.feature-card');
+            if ('IntersectionObserver' in window) {
+                const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+                const observer = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('animate__animated', 'animate__fadeInUp');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, observerOptions);
+                featureCards.forEach(card => observer.observe(card));
+            } else {
+                 featureCards.forEach(card => card.classList.add('animate__animated', 'animate__fadeInUp'));
+            }
+        });
+    </script>
+    
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/nav.html') 
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('navbar-placeholder').innerHTML = data;
+                    
+                    const scripts = document.getElementById('navbar-placeholder').querySelectorAll("script");
+                    scripts.forEach(script => {
+                        const newScript = document.createElement("script");
+                        newScript.defer = true; // Ensure scripts run after DOM is fully parsed
+                        if (script.src) {
+                            newScript.src = script.src;
+                        } else {
+                            newScript.textContent = script.textContent;
+                        }
+                        document.body.appendChild(newScript).parentNode.removeChild(newScript);
+                    });
+                })
+                .catch(error => console.error('Error loading navbar:', error));
+
+            const lazyImages = document.querySelectorAll('img[loading="lazy"]');
+            lazyImages.forEach(img => {
+                if(img.dataset.src) img.src = img.dataset.src;
+            });
+        });
+    </script>
+</body>
+</html>
